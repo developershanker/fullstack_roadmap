@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>React Native → Full Stack: Backend Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0f0f11;
+    --surface: #17171a;
+    --surface2: #1e1e23;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8e6e0;
+    --muted: #7a7870;
+    --accent: #c8b89a;
+    --teal: #4ecdc4;
+    --teal-dim: rgba(78,205,196,0.12);
+    --coral: #e8896a;
+    --coral-dim: rgba(232,137,106,0.12);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.12);
+    --amber: #f4c06a;
+    --amber-dim: rgba(244,192,106,0.12);
+    --green: #6bcb77;
+    --green-dim: rgba(107,203,119,0.12);
+    --gray-dim: rgba(255,255,255,0.05);
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,15,17,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0;
+    padding: 0 2rem;
+    height: 52px;
+  }
+  .nav-brand {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--accent);
+    margin-right: auto;
+    letter-spacing: -0.01em;
+  }
+  .nav-tabs { display: flex; gap: 0; }
+  .nav-tab {
+    padding: 0 18px; height: 52px;
+    display: flex; align-items: center;
+    font-size: 13px; font-weight: 400;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    background: none; border-top: none; border-left: none; border-right: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* SECTIONS */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* HERO */
+  .hero {
+    padding: 5rem 2rem 3rem;
+    max-width: 860px; margin: 0 auto;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.12em;
+    color: var(--teal); text-transform: uppercase;
+    margin-bottom: 1.2rem;
+  }
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 300;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 1.2rem;
+  }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub {
+    font-size: 16px; color: var(--muted); max-width: 560px;
+    line-height: 1.65;
+  }
+
+  /* GRID */
+  .content { max-width: 860px; margin: 0 auto; padding: 0 2rem 5rem; }
+
+  /* CONCEPT CARDS */
+  .concepts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .concepts-grid { grid-template-columns: 1fr; } }
+
+  .concept-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .concept-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .concept-card.open { border-color: var(--border2); }
+
+  .card-header {
+    padding: 1.1rem 1.3rem;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .card-num {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    flex-shrink: 0;
+  }
+  .card-title { font-size: 14px; font-weight: 500; flex: 1; }
+  .card-chevron {
+    width: 16px; height: 16px; flex-shrink: 0;
+    color: var(--muted); transition: transform 0.2s;
+  }
+  .concept-card.open .card-chevron { transform: rotate(180deg); }
+
+  .card-body {
+    display: none;
+    padding: 0 1.3rem 1.3rem;
+    border-top: 1px solid var(--border);
+  }
+  .concept-card.open .card-body { display: block; }
+
+  .analogy {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 1rem 0;
+  }
+  .analogy-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .analogy-text { font-size: 13px; color: var(--text); line-height: 1.55; }
+
+  .concept-points { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+  .concept-point { display: flex; gap: 10px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .point-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 7px; }
+
+  /* ROADMAP */
+  .roadmap { position: relative; padding-left: 28px; }
+  .roadmap::before {
+    content: ''; position: absolute;
+    left: 8px; top: 20px; bottom: 20px;
+    width: 1px; background: var(--border2);
+  }
+  .phase {
+    position: relative; margin-bottom: 2.5rem;
+  }
+  .phase-dot {
+    position: absolute; left: -28px; top: 4px;
+    width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    border: 1px solid;
+  }
+  .phase-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .phase-title { font-size: 16px; font-weight: 500; margin-bottom: 4px; color: var(--text); }
+  .phase-duration { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .skill-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill {
+    font-size: 11px; padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* PHASE DIAGRAMS */
+  .phase-section { margin-bottom: 4rem; }
+  .phase-section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem; font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+  .phase-section-sub { font-size: 14px; color: var(--muted); margin-bottom: 2rem; line-height: 1.6; }
+
+  .diagram-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    overflow-x: auto;
+  }
+
+  /* SVG DIAGRAM STYLES */
+  svg text { font-family: 'DM Sans', sans-serif; }
+  .node-box {
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .node-box:hover rect, .node-box:hover ellipse { opacity: 0.85; }
+
+  .flow-label { font-size: 11px; fill: #7a7870; font-family: 'DM Mono', monospace; }
+  .node-title { font-size: 13px; font-weight: 500; }
+  .node-sub { font-size: 11px; }
+  .section-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; fill: #7a7870; font-family: 'DM Mono', monospace; }
+
+  /* DIFF TABLE */
+  .diff-table {
+    width: 100%; border-collapse: collapse;
+    margin-top: 2rem; font-size: 13px;
+    font-family: 'DM Mono', monospace;
+  }
+  .diff-table th {
+    text-align: left; padding: 10px 14px;
+    background: var(--surface2);
+    color: var(--muted); font-weight: 400;
+    font-size: 11px; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  .diff-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text); vertical-align: top;
+  }
+  .diff-table tr:last-child td { border-bottom: none; }
+  .diff-table tr:hover td { background: var(--surface2); }
+
+  /* PROBLEM BOXES */
+  .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 1.5rem; }
+  @media (max-width: 560px) { .problem-grid { grid-template-columns: 1fr; } }
+  .problem-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .problem-box-title { font-size: 12px; font-weight: 500; color: var(--coral); margin-bottom: 4px; }
+  .problem-box-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .change-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 1.5rem; }
+  @media (max-width: 560px) { .change-grid { grid-template-columns: 1fr; } }
+  .change-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid;
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .change-box-title { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+  .change-box-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* TOOLTIP */
+  .tooltip {
+    display: none; position: fixed;
+    background: #1e1e23; border: 1px solid var(--border2);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 12px; color: var(--text); line-height: 1.5;
+    max-width: 240px; z-index: 999;
+    pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .tooltip.visible { display: block; }
+  .tooltip-title { font-weight: 500; color: var(--accent); margin-bottom: 4px; font-size: 12px; }
+
+  /* SECTION DIVIDER */
+  .divider {
+    height: 1px; background: var(--border);
+    margin: 3rem 0;
+  }
+
+  /* HIGHLIGHT */
+  .highlight { color: var(--accent); }
+  .mono { font-family: 'DM Mono', monospace; font-size: 0.9em; }
+</style>
+</head>
+<body>
+
+<div id="tooltip" class="tooltip">
+  <div class="tooltip-title" id="tip-title"></div>
+  <div id="tip-body"></div>
+</div>
+
+<nav>
+  <span class="nav-brand">RN → Full Stack</span>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('concepts', this)">Core concepts</button>
+    <button class="nav-tab" onclick="showSection('roadmap', this)">Roadmap</button>
+    <button class="nav-tab" onclick="showSection('phases', this)">NDR architecture</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SECTION 1: CONCEPTS                                    -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section active" id="section-concepts">
+  <div class="hero">
+    <div class="hero-eyebrow">Backend for frontend engineers</div>
+    <h1>Your React Native skills,<br/><em>mapped to backend.</em></h1>
+    <p class="hero-sub">Every backend concept below is explained through what you already know — Redux, useEffect, API calls, TypeScript. Nothing starts from zero.</p>
+  </div>
+  <div class="content">
+    <div class="concepts-grid" id="concepts-grid">
+
+      <!-- CARD 1: REST API -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div class="card-num" style="background:var(--teal-dim);color:var(--teal);border:1px solid rgba(78,205,196,0.25)">1</div>
+          <div class="card-title">REST API design</div>
+          <svg class="card-chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="card-body">
+          <div class="analogy">
+            <div class="analogy-label">Your parallel</div>
+            <div class="analogy-text">You consume APIs every day — axios, fetch, response parsing. Designing a REST API is just the other side of that same contract. You already know what a good API feels like from the consumer side.</div>
+          </div>
+          <div class="concept-points">
+            <div class="concept-point"><div class="point-dot" style="background:var(--teal)"></div><span><strong style="color:var(--text)">Routes &amp; methods</strong> — GET (read), POST (create), PUT/PATCH (update), DELETE. Same mental model as screen navigation, but for data.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--teal)"></div><span><strong style="color:var(--text)">Request/response shape</strong> — You've debugged malformed API responses at Apollo247. Now you define the contract yourself.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--teal)"></div><span><strong style="color:var(--text)">Status codes</strong> — 200, 201, 400, 401, 403, 404, 500. You handle these on the frontend already — now you send them.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--teal)"></div><span><strong style="color:var(--text)">Middleware</strong> — Like React Higher Order Components. Wraps every request for auth, logging, and error handling before it hits your route handler.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: Databases -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div class="card-num" style="background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.25)">2</div>
+          <div class="card-title">Databases &amp; SQL</div>
+          <svg class="card-chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="card-body">
+          <div class="analogy">
+            <div class="analogy-label">Your parallel</div>
+            <div class="analogy-text">Redux store = in-memory state. A database is that state, but persisted, structured, and queryable. Your Redux selectors are essentially SQL WHERE clauses. Your reducers are INSERT/UPDATE/DELETE operations.</div>
+          </div>
+          <div class="concept-points">
+            <div class="concept-point"><div class="point-dot" style="background:var(--purple)"></div><span><strong style="color:var(--text)">Tables &amp; relations</strong> — Like TypeScript interfaces, but enforced at the storage level. Users table, Orders table, linked by IDs (foreign keys).</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--purple)"></div><span><strong style="color:var(--text)">SQL basics</strong> — SELECT, WHERE, JOIN, GROUP BY. Think of JOIN as merging two Redux slices by a shared ID field.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--purple)"></div><span><strong style="color:var(--text)">Indexing</strong> — Like a book index. Without it, every query scans every row. With it, the database jumps straight to the answer.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--purple)"></div><span><strong style="color:var(--text)">ORMs (Prisma)</strong> — Write TypeScript objects that auto-generate SQL. Same mental model as your typed Redux state — schema first, then operations.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3: Kafka -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div class="card-num" style="background:var(--coral-dim);color:var(--coral);border:1px solid rgba(232,137,106,0.25)">3</div>
+          <div class="card-title">Event-driven &amp; Kafka</div>
+          <svg class="card-chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="card-body">
+          <div class="analogy">
+            <div class="analogy-label">Your parallel</div>
+            <div class="analogy-text">Kafka is a distributed event emitter. Your BackHandler + useEffect subscription pattern is the same concept — something happens, listeners react. Kafka does this across services at massive scale.</div>
+          </div>
+          <div class="concept-points">
+            <div class="concept-point"><div class="point-dot" style="background:var(--coral)"></div><span><strong style="color:var(--text)">Producer</strong> — Emits an event. Like <span class="mono">dispatch(action)</span> in Redux.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--coral)"></div><span><strong style="color:var(--text)">Topic</strong> — A named channel. Like a Redux slice — only consumers subscribed to this topic receive the event.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--coral)"></div><span><strong style="color:var(--text)">Broker</strong> — The middleman that stores and routes events. Kafka's equivalent of the Redux store — persistent and central.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--coral)"></div><span><strong style="color:var(--text)">Consumer</strong> — Subscribes and reacts. Like <span class="mono">useSelector</span> — reacts when new data arrives in its topic.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 4: CDC -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div class="card-num" style="background:var(--amber-dim);color:var(--amber);border:1px solid rgba(244,192,106,0.25)">4</div>
+          <div class="card-title">CDC — Change Data Capture</div>
+          <svg class="card-chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="card-body">
+          <div class="analogy">
+            <div class="analogy-label">Your parallel</div>
+            <div class="analogy-text">CDC watches a database for any change (insert, update, delete) and fires an event. It's exactly like <span class="mono">useEffect</span> with a dependency array — watching a value and reacting when it changes, but at the database level.</div>
+          </div>
+          <div class="concept-points">
+            <div class="concept-point"><div class="point-dot" style="background:var(--amber)"></div><span><strong style="color:var(--text)">Maxwell</strong> — Reads MySQL's binary log (the DB's internal change diary) and publishes each change as a Kafka event automatically.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--amber)"></div><span><strong style="color:var(--text)">Why it matters</strong> — Lets you sync two databases without tightly coupling them. NetSuite changes → your DB gets updated automatically, no polling.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--amber)"></div><span><strong style="color:var(--text)">Binary log</strong> — Every DB write is logged in sequence, like a git commit history. Maxwell reads this log to detect what changed.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 5: Node.js -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div class="card-num" style="background:var(--green-dim);color:var(--green);border:1px solid rgba(107,203,119,0.25)">5</div>
+          <div class="card-title">Node.js backend</div>
+          <svg class="card-chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="card-body">
+          <div class="analogy">
+            <div class="analogy-label">Your parallel</div>
+            <div class="analogy-text">You're already in JavaScript. You've worked on apollo-insurance-ssr with Node v22. The mental jump is smaller than you think — same language, different context (server vs app). Express is basically React Router for the backend.</div>
+          </div>
+          <div class="concept-points">
+            <div class="concept-point"><div class="point-dot" style="background:var(--green)"></div><span><strong style="color:var(--text)">Express.js</strong> — Build APIs in 10 lines of code. <span class="mono">app.get('/path', handler)</span> — define a route, write a handler, done.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--green)"></div><span><strong style="color:var(--text)">Event loop</strong> — Node is async/non-blocking. You already know Promise chains and async/await from React Native — same patterns apply.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--green)"></div><span><strong style="color:var(--text)">New packages to learn</strong> — <span class="mono">dotenv</span>, <span class="mono">cors</span>, <span class="mono">helmet</span>, <span class="mono">prisma</span>, <span class="mono">jsonwebtoken</span>. Same npm you already use daily.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 6: System Design -->
+      <div class="concept-card" onclick="toggleCard(this)">
+        <div class="card-header">
+          <div class="card-num" style="background:rgba(200,184,154,0.1);color:var(--accent);border:1px solid rgba(200,184,154,0.25)">6</div>
+          <div class="card-title">System design</div>
+          <svg class="card-chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="card-body">
+          <div class="analogy">
+            <div class="analogy-label">Your parallel</div>
+            <div class="analogy-text">Kartikay's 3-phase NDR architecture IS a system design answer. You can already explain it. That's exactly the level of thinking full stack interviews test — trade-offs, decoupling, incremental migration.</div>
+          </div>
+          <div class="concept-points">
+            <div class="concept-point"><div class="point-dot" style="background:var(--accent)"></div><span><strong style="color:var(--text)">Scalability</strong> — What breaks when 10x more users hit your API? Horizontal scaling (more servers) vs vertical (bigger server).</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--accent)"></div><span><strong style="color:var(--text)">Caching (Redis)</strong> — Like memoization in React. Store expensive query results in memory so you don't recompute them every time.</span></div>
+            <div class="concept-point"><div class="point-dot" style="background:var(--accent)"></div><span><strong style="color:var(--text)">Decoupling</strong> — The NDR pattern. Services should not directly depend on each other. Use Kafka, APIs, and queues as the bridges.</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SECTION 2: ROADMAP                                     -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="section-roadmap">
+  <div class="hero">
+    <div class="hero-eyebrow">10-week plan</div>
+    <h1>Your learning <em>roadmap.</em></h1>
+    <p class="hero-sub">Sequenced so each concept builds on the last. Node.js first — same language, smallest leap. Kafka last — you'll understand exactly why it exists by then.</p>
+  </div>
+  <div class="content">
+    <div class="roadmap">
+
+      <div class="phase">
+        <div class="phase-dot" style="background:var(--teal-dim);color:var(--teal);border-color:rgba(78,205,196,0.3)">1</div>
+        <div class="phase-label" style="color:var(--teal)">Weeks 1–2</div>
+        <div class="phase-title">Node.js + Express — build your first API</div>
+        <div class="phase-duration">Your easiest entry point. Same JS you already write, different context.</div>
+        <div class="skill-pills">
+          <span class="pill">Express routing</span>
+          <span class="pill">Middleware</span>
+          <span class="pill">req/res cycle</span>
+          <span class="pill">async/await in Node</span>
+          <span class="pill">npm packages</span>
+        </div>
+        <div style="margin-top:1rem;padding:12px 16px;background:var(--surface2);border-radius:8px;font-size:13px;color:var(--muted)">
+          <strong style="color:var(--text);display:block;margin-bottom:4px">Project:</strong> Build a small REST API that manages a list of insurance policies — GET all, GET one, POST create, DELETE. Deploy it locally with nodemon.
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot" style="background:var(--purple-dim);color:var(--purple);border-color:rgba(167,139,250,0.3)">2</div>
+        <div class="phase-label" style="color:var(--purple)">Weeks 3–4</div>
+        <div class="phase-title">SQL + PostgreSQL with Prisma ORM</div>
+        <div class="phase-duration">Your Redux → database mental model shift. Schema first, then operations.</div>
+        <div class="skill-pills">
+          <span class="pill">Schema design</span>
+          <span class="pill">SELECT / WHERE / JOIN</span>
+          <span class="pill">Prisma ORM</span>
+          <span class="pill">Migrations</span>
+          <span class="pill">Relations</span>
+        </div>
+        <div style="margin-top:1rem;padding:12px 16px;background:var(--surface2);border-radius:8px;font-size:13px;color:var(--muted)">
+          <strong style="color:var(--text);display:block;margin-bottom:4px">Project:</strong> Add a PostgreSQL database to your week 1–2 API. Model users, policies, and claims. Write JOIN queries to get a user's full policy history.
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot" style="background:var(--coral-dim);color:var(--coral);border-color:rgba(232,137,106,0.3)">3</div>
+        <div class="phase-label" style="color:var(--coral)">Weeks 5–6</div>
+        <div class="phase-title">Auth, security, and deployment</div>
+        <div class="phase-duration">Make it production-ready. JWT tokens, env vars, Docker basics.</div>
+        <div class="skill-pills">
+          <span class="pill">JWT authentication</span>
+          <span class="pill">OAuth basics</span>
+          <span class="pill">Environment variables</span>
+          <span class="pill">Docker intro</span>
+          <span class="pill">HTTPS / CORS</span>
+        </div>
+        <div style="margin-top:1rem;padding:12px 16px;background:var(--surface2);border-radius:8px;font-size:13px;color:var(--muted)">
+          <strong style="color:var(--text);display:block;margin-bottom:4px">Project:</strong> Add login to your API. Issue JWT tokens on login, protect routes with a middleware that verifies the token. Deploy to Railway or Render.
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot" style="background:var(--amber-dim);color:var(--amber);border-color:rgba(244,192,106,0.3)">4</div>
+        <div class="phase-label" style="color:var(--amber)">Weeks 7–8</div>
+        <div class="phase-title">Event-driven systems — Kafka concepts</div>
+        <div class="phase-duration">Where Kartikay's architecture lives. You'll finally understand the NDR diagram top to bottom.</div>
+        <div class="skill-pills">
+          <span class="pill">Message queues</span>
+          <span class="pill">Kafka topics</span>
+          <span class="pill">CDC pattern</span>
+          <span class="pill">Microservices intro</span>
+          <span class="pill">Maxwell</span>
+        </div>
+        <div style="margin-top:1rem;padding:12px 16px;background:var(--surface2);border-radius:8px;font-size:13px;color:var(--muted)">
+          <strong style="color:var(--text);display:block;margin-bottom:4px">Project:</strong> Add a Kafka producer to your API that emits an event whenever a policy is created. Write a consumer that logs all events. Run locally with Docker Compose.
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot" style="background:rgba(200,184,154,0.1);color:var(--accent);border-color:rgba(200,184,154,0.3)">5</div>
+        <div class="phase-label" style="color:var(--accent)">Weeks 9–10</div>
+        <div class="phase-title">System design + portfolio project</div>
+        <div class="phase-duration">Interview-ready. Design and build a complete full stack project for your GitHub.</div>
+        <div class="skill-pills">
+          <span class="pill">System design interviews</span>
+          <span class="pill">Full stack project</span>
+          <span class="pill">API + DB + frontend</span>
+          <span class="pill">GitHub portfolio</span>
+          <span class="pill">README</span>
+        </div>
+        <div style="margin-top:1rem;padding:12px 16px;background:var(--surface2);border-radius:8px;font-size:13px;color:var(--muted)">
+          <strong style="color:var(--text);display:block;margin-bottom:4px">Project:</strong> Build a healthcare insurance tracker — React Native frontend + Node/Express API + PostgreSQL + Kafka events for audit logs. Full stack. Your existing domain knowledge is the differentiator.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  SECTION 3: NDR PHASES                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="section-phases">
+  <div class="hero">
+    <div class="hero-eyebrow">Kartikay's architecture, decoded</div>
+    <h1>NDR — <em>3 phases</em> of decoupling.</h1>
+    <p class="hero-sub">NetSuite Dependency Reduction. A real-world, production system design you can already explain. Each phase shifts the flow further away from NetSuite as the source of truth.</p>
+  </div>
+  <div class="content">
+
+    <!-- PHASE 1 -->
+    <div class="phase-section">
+      <div class="phase-label" style="color:var(--coral);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Phase 1 — the problem</div>
+      <div class="phase-section-title">Everything goes through NetSuite</div>
+      <div class="phase-section-sub">Before NDR, every read and write hits NetSuite's API directly. Tight coupling. Expensive. Fragile. If NetSuite goes down, you go down.</div>
+
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 130" width="100%" style="min-width:500px">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#4a4a52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr-back" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#3a3a40" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <g class="node-box" data-tip="wrapper" onclick="showTip(event,'Wrapper API','Abstracts the NetSuite API behind a consistent interface. Your code calls the Wrapper — the Wrapper calls NetSuite. Protects the rest of the system from NetSuite\'s API shape.')">
+            <rect x="20" y="30" width="155" height="60" rx="8" fill="#1a2a28" stroke="rgba(78,205,196,0.3)" stroke-width="1"/>
+            <text x="97" y="56" text-anchor="middle" class="node-title" fill="#4ecdc4">Wrapper API</text>
+            <text x="97" y="74" text-anchor="middle" class="node-sub" fill="#4a6e6b">Abstracts NetSuite calls</text>
+          </g>
+
+          <line x1="175" y1="55" x2="215" y2="55" stroke="#4a4a52" stroke-width="1" marker-end="url(#arr)"/>
+          <line x1="215" y1="70" x2="175" y2="70" stroke="#3a3a40" stroke-width="1" marker-end="url(#arr-back)"/>
+          <text x="195" y="48" text-anchor="middle" class="flow-label">req</text>
+          <text x="195" y="88" text-anchor="middle" class="flow-label">res</text>
+
+          <g class="node-box" data-tip="netsuite-api" onclick="showTip(event,'NetSuite API','The vendor-managed API. Every call costs money (NetSuite charges per ticket). Every call has network latency. And if NetSuite is down or rate-limiting — your entire system stalls.')">
+            <rect x="217" y="30" width="155" height="60" rx="8" fill="#1f1f24" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <text x="295" y="56" text-anchor="middle" class="node-title" fill="#888780">NetSuite API</text>
+            <text x="295" y="74" text-anchor="middle" class="node-sub" fill="#555550">External vendor API</text>
+          </g>
+
+          <line x1="372" y1="60" x2="412" y2="60" stroke="#4a4a52" stroke-width="1" marker-end="url(#arr)"/>
+
+          <g class="node-box" data-tip="netsuite-db" onclick="showTip(event,'NetSuite DB','All data lives here. You have no copy, no fallback. Every read goes over the network to a third-party system you don\'t control. This is the single point of failure NDR fixes.')">
+            <rect x="414" y="30" width="155" height="60" rx="8" fill="#1f1f24" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <text x="492" y="56" text-anchor="middle" class="node-title" fill="#888780">NetSuite DB</text>
+            <text x="492" y="74" text-anchor="middle" class="node-sub" fill="#555550">All data lives here</text>
+          </g>
+
+          <text x="620" y="52" class="section-label">source</text>
+          <text x="620" y="66" class="section-label">of truth</text>
+        </svg>
+      </div>
+
+      <div class="problem-grid">
+        <div class="problem-box">
+          <div class="problem-box-title">Tight coupling</div>
+          <div class="problem-box-text">NetSuite down = you down. No fallback, no cache, no resilience.</div>
+        </div>
+        <div class="problem-box">
+          <div class="problem-box-title">Slow reads</div>
+          <div class="problem-box-text">Every read = network API call. Always paying the latency cost.</div>
+        </div>
+        <div class="problem-box">
+          <div class="problem-box-title">Cost per ticket</div>
+          <div class="problem-box-text">NetSuite charges per API call. At scale, every read costs money.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- PHASE 2 -->
+    <div class="phase-section">
+      <div class="phase-label" style="color:var(--amber);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Phase 2 — build your own DB, sync via Kafka</div>
+      <div class="phase-section-title">Reads from your DB. Writes still go to NetSuite.</div>
+      <div class="phase-section-sub">Maxwell (CDC) watches the NetSuite DB. Every change fires a Kafka event. A consumer copies the change into your own database. Now reads no longer touch NetSuite — but writes still do.</div>
+
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 340" width="100%" style="min-width:520px">
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#4a4a52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr2-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr2-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr2-coral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#D85A30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <text x="20" y="22" class="section-label">write path (still to NetSuite)</text>
+
+          <g class="node-box" onclick="showTip(event,'My API','Your backend. In phase 2, writes still go directly to NetSuite via the Wrapper API. But reads now come from your own database — no NetSuite call needed for reads.')">
+            <rect x="20" y="35" width="110" height="52" rx="8" fill="#1a2a28" stroke="rgba(78,205,196,0.3)" stroke-width="1"/>
+            <text x="75" y="57" text-anchor="middle" class="node-title" fill="#4ecdc4">My API</text>
+            <text x="75" y="74" text-anchor="middle" class="node-sub" fill="#4a6e6b">Write + read</text>
+          </g>
+
+          <line x1="130" y1="55" x2="163" y2="55" stroke="#4a4a52" stroke-width="1" marker-end="url(#arr2)"/>
+          <text x="147" y="48" text-anchor="middle" class="flow-label">write</text>
+
+          <g class="node-box" onclick="showTip(event,'Wrapper API','Still sitting in the write path. Write requests from My API pass through here to reach NetSuite. It provides a stable interface so your code doesn\'t have to know NetSuite\'s exact API shape.')">
+            <rect x="165" y="35" width="120" height="52" rx="8" fill="#1f1f24" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <text x="225" y="57" text-anchor="middle" class="node-title" fill="#888780">Wrapper API</text>
+            <text x="225" y="74" text-anchor="middle" class="node-sub" fill="#555550">Adapter layer</text>
+          </g>
+
+          <line x1="285" y1="61" x2="315" y2="61" stroke="#4a4a52" stroke-width="1" marker-end="url(#arr2)"/>
+
+          <g class="node-box" onclick="showTip(event,'NetSuite API','Writes still go here in phase 2. The goal of NDR is to eventually remove this dependency for writes too — that happens in phase 3.')">
+            <rect x="317" y="35" width="120" height="52" rx="8" fill="#1f1f24" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <text x="377" y="57" text-anchor="middle" class="node-title" fill="#888780">NetSuite API</text>
+            <text x="377" y="74" text-anchor="middle" class="node-sub" fill="#555550">Write target</text>
+          </g>
+
+          <line x1="437" y1="61" x2="467" y2="61" stroke="#4a4a52" stroke-width="1" marker-end="url(#arr2)"/>
+
+          <g class="node-box" onclick="showTip(event,'NetSuite DB','Data is written here. But now Maxwell is watching this DB\'s binary log. Every INSERT, UPDATE, DELETE becomes a Kafka event automatically.')">
+            <rect x="469" y="35" width="120" height="52" rx="8" fill="#1f1f24" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <text x="529" y="57" text-anchor="middle" class="node-title" fill="#888780">NetSuite DB</text>
+            <text x="529" y="74" text-anchor="middle" class="node-sub" fill="#555550">Still source of truth</text>
+          </g>
+
+          <line x1="529" y1="87" x2="529" y2="117" stroke="#BA7517" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr2-amber)"/>
+          <text x="547" y="105" class="flow-label" fill="#BA7517">CDC watches</text>
+
+          <text x="20" y="132" class="section-label">kafka sync pipeline</text>
+
+          <g class="node-box" onclick="showTip(event,'Maxwell (CDC)','Reads the MySQL binary log — a record of every single database change. For each change, it publishes a Kafka event with the full details: what table changed, what the old value was, what the new value is.')">
+            <rect x="420" y="142" width="160" height="52" rx="8" fill="#2a2010" stroke="rgba(244,192,106,0.3)" stroke-width="1"/>
+            <text x="500" y="163" text-anchor="middle" class="node-title" fill="#f4c06a">Maxwell (CDC)</text>
+            <text x="500" y="180" text-anchor="middle" class="node-sub" fill="#7a6030">Reads DB change log</text>
+          </g>
+
+          <line x1="420" y1="168" x2="390" y2="168" stroke="#D85A30" stroke-width="1" marker-end="url(#arr2-coral)"/>
+
+          <g class="node-box" onclick="showTip(event,'Kafka Producer','Takes the change event from Maxwell and publishes it to a Kafka topic. Think of it like dispatch(action) in Redux — it fires the event into the system without knowing who will consume it.')">
+            <rect x="255" y="142" width="133" height="52" rx="8" fill="#2a1810" stroke="rgba(232,137,106,0.3)" stroke-width="1"/>
+            <text x="321" y="163" text-anchor="middle" class="node-title" fill="#e8896a">Kafka producer</text>
+            <text x="321" y="180" text-anchor="middle" class="node-sub" fill="#7a4830">Emits change event</text>
+          </g>
+
+          <line x1="255" y1="168" x2="222" y2="168" stroke="#7F77DD" stroke-width="1" marker-end="url(#arr2)"/>
+
+          <g class="node-box" onclick="showTip(event,'Kafka Broker','Stores events reliably. Multiple consumers can read the same event independently. Events are ordered and retained for a configurable duration. Think of it like the Redux store — persistent, central, ordered.')">
+            <rect x="115" y="142" width="105" height="52" rx="8" fill="#1a1828" stroke="rgba(167,139,250,0.3)" stroke-width="1"/>
+            <text x="168" y="163" text-anchor="middle" class="node-title" fill="#a78bfa">Broker</text>
+            <text x="168" y="180" text-anchor="middle" class="node-sub" fill="#5a5080">Stores events</text>
+          </g>
+
+          <line x1="115" y1="168" x2="88" y2="168" stroke="#D85A30" stroke-width="1" marker-end="url(#arr2-coral)"/>
+
+          <g class="node-box" onclick="showTip(event,'Kafka Consumer 1','Subscribes to the Kafka topic and reacts to each change event. In this case, it copies the changed data into My Database. Like useSelector — it reacts every time new data arrives.')">
+            <rect x="20" y="142" width="65" height="52" rx="8" fill="#2a1810" stroke="rgba(232,137,106,0.3)" stroke-width="1"/>
+            <text x="52" y="161" text-anchor="middle" class="node-title" fill="#e8896a" style="font-size:12px">Consumer</text>
+            <text x="52" y="178" text-anchor="middle" class="node-sub" fill="#7a4830">Reads events</text>
+          </g>
+
+          <line x1="52" y1="194" x2="52" y2="222" stroke="#1D9E75" stroke-width="1" marker-end="url(#arr2-teal)"/>
+          <text x="70" y="212" class="flow-label" fill="#1D9E75">copies data</text>
+
+          <text x="20" y="238" class="section-label">read path (no netsuite needed)</text>
+
+          <g class="node-box" onclick="showTip(event,'My Database','Your own PostgreSQL/MySQL database — a mirror of NetSuite\'s data, kept in sync by the Kafka pipeline. Reads from here are fast (local network) and free (no vendor charges).')">
+            <rect x="20" y="248" width="150" height="52" rx="8" fill="#1a2a28" stroke="rgba(78,205,196,0.3)" stroke-width="1"/>
+            <text x="95" y="269" text-anchor="middle" class="node-title" fill="#4ecdc4">My database</text>
+            <text x="95" y="286" text-anchor="middle" class="node-sub" fill="#4a6e6b">Mirror of NetSuite</text>
+          </g>
+
+          <line x1="170" y1="274" x2="200" y2="274" stroke="#1D9E75" stroke-width="1" marker-end="url(#arr2-teal)"/>
+          <text x="213" y="267" class="flow-label" fill="#1D9E75">read</text>
+
+          <g class="node-box" onclick="showTip(event,'My API (read path)','For read requests, My API now queries My Database directly — no Wrapper API, no NetSuite API, no network hop to a vendor. Fast, cheap, resilient.')">
+            <rect x="200" y="248" width="110" height="52" rx="8" fill="#1a2a28" stroke="rgba(78,205,196,0.3)" stroke-width="1"/>
+            <text x="255" y="269" text-anchor="middle" class="node-title" fill="#4ecdc4">My API</text>
+            <text x="255" y="286" text-anchor="middle" class="node-sub" fill="#4a6e6b">Reads locally</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="change-grid">
+        <div class="change-box" style="border-left-color:var(--teal)">
+          <div class="change-box-title" style="color:var(--teal)">Reads are now free</div>
+          <div class="change-box-text">No NetSuite API call required for any read operation.</div>
+        </div>
+        <div class="change-box" style="border-left-color:var(--teal)">
+          <div class="change-box-title" style="color:var(--teal)">Reads are fast</div>
+          <div class="change-box-text">Your DB, your network, no third-party latency.</div>
+        </div>
+        <div class="change-box" style="border-left-color:var(--coral)">
+          <div class="change-box-title" style="color:var(--coral)">Writes still coupled</div>
+          <div class="change-box-text">Writes still go directly to NetSuite. Phase 3 fixes this.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- PHASE 3 -->
+    <div class="phase-section">
+      <div class="phase-label" style="color:var(--green);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px">Phase 3 — full NDR</div>
+      <div class="phase-section-title">Writes also originate from your own system.</div>
+      <div class="phase-section-sub">Now writes go to your DB first. Maxwell watches your DB, fires a Kafka event, and a consumer forwards the write to NetSuite via the Wrapper API. NetSuite becomes a downstream sync target — not the source of truth anymore.</div>
+
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 320" width="100%" style="min-width:520px">
+          <defs>
+            <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#4a4a52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr3-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr3-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr3-coral" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#D85A30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr3-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <text x="20" y="22" class="section-label">write path — starts in your own system now</text>
+
+          <g class="node-box" onclick="showTip(event,'My API','In phase 3, both reads AND writes start here. Writes go into My Database first — not NetSuite. The Kafka pipeline handles syncing to NetSuite asynchronously.')">
+            <rect x="20" y="35" width="110" height="52" rx="8" fill="#1a2a28" stroke="rgba(78,205,196,0.4)" stroke-width="1.5"/>
+            <text x="75" y="57" text-anchor="middle" class="node-title" fill="#4ecdc4">My API</text>
+            <text x="75" y="74" text-anchor="middle" class="node-sub" fill="#4a6e6b">Write here first</text>
+          </g>
+
+          <line x1="130" y1="61" x2="163" y2="61" stroke="#1D9E75" stroke-width="1.5" marker-end="url(#arr3-teal)"/>
+          <text x="147" y="53" text-anchor="middle" class="flow-label" fill="#1D9E75">write</text>
+
+          <g class="node-box" onclick="showTip(event,'My Database (source of truth)','This is now the source of truth. Your system owns the data. NetSuite is just a sync target downstream. Maxwell watches this database now — not the NetSuite DB.')">
+            <rect x="165" y="35" width="155" height="52" rx="8" fill="#1a2a28" stroke="rgba(78,205,196,0.4)" stroke-width="1.5"/>
+            <text x="243" y="57" text-anchor="middle" class="node-title" fill="#4ecdc4">My database</text>
+            <text x="243" y="74" text-anchor="middle" class="node-sub" fill="#4a6e6b">Source of truth</text>
+          </g>
+
+          <line x1="243" y1="87" x2="243" y2="117" stroke="#BA7517" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr3-amber)"/>
+          <text x="265" y="105" class="flow-label" fill="#BA7517">CDC watches</text>
+
+          <text x="20" y="132" class="section-label">kafka pipeline — now pushes writes TO netsuite</text>
+
+          <g class="node-box" onclick="showTip(event,'Maxwell (CDC)','Now watching My Database instead of the NetSuite DB. Every write to My Database fires a Kafka event. The pipeline direction has flipped — data flows OUT to NetSuite, not IN from it.')">
+            <rect x="165" y="142" width="155" height="52" rx="8" fill="#2a2010" stroke="rgba(244,192,106,0.3)" stroke-width="1"/>
+            <text x="243" y="163" text-anchor="middle" class="node-title" fill="#f4c06a">Maxwell (CDC)</text>
+            <text x="243" y="180" text-anchor="middle" class="node-sub" fill="#7a6030">Watches My DB now</text>
+          </g>
+
+          <line x1="320" y1="168" x2="353" y2="168" stroke="#D85A30" stroke-width="1" marker-end="url(#arr3-coral)"/>
+
+          <g class="node-box" onclick="showTip(event,'Kafka Producer','Fires an event into the Kafka topic for every change in My Database. The consumer on the other end will forward this change to NetSuite.')">
+            <rect x="355" y="142" width="130" height="52" rx="8" fill="#2a1810" stroke="rgba(232,137,106,0.3)" stroke-width="1"/>
+            <text x="420" y="163" text-anchor="middle" class="node-title" fill="#e8896a">Kafka producer</text>
+            <text x="420" y="180" text-anchor="middle" class="node-sub" fill="#7a4830">Fires write event</text>
+          </g>
+
+          <line x1="485" y1="168" x2="515" y2="168" stroke="#7F77DD" stroke-width="1" marker-end="url(#arr3)"/>
+
+          <g class="node-box" onclick="showTip(event,'Kafka Broker','Stores and routes the event. If NetSuite is temporarily down, the event waits here safely. When NetSuite recovers, the consumer picks it up and processes it — no data loss.')">
+            <rect x="517" y="142" width="100" height="52" rx="8" fill="#1a1828" stroke="rgba(167,139,250,0.3)" stroke-width="1"/>
+            <text x="567" y="163" text-anchor="middle" class="node-title" fill="#a78bfa">Broker</text>
+            <text x="567" y="180" text-anchor="middle" class="node-sub" fill="#5a5080">Buffers events</text>
+          </g>
+
+          <line x1="567" y1="194" x2="567" y2="222" stroke="#D85A30" stroke-width="1" marker-end="url(#arr3-coral)"/>
+
+          <text x="20" y="238" class="section-label">consumer pushes write downstream to netsuite</text>
+
+          <g class="node-box" onclick="showTip(event,'Kafka Consumer','Reads the write event from the broker and forwards it to the Wrapper API, which calls NetSuite. NetSuite is now a downstream recipient of writes, not the origin.')">
+            <rect x="460" y="248" width="215" height="52" rx="8" fill="#2a1810" stroke="rgba(232,137,106,0.3)" stroke-width="1"/>
+            <text x="568" y="269" text-anchor="middle" class="node-title" fill="#e8896a">Kafka consumer</text>
+            <text x="568" y="286" text-anchor="middle" class="node-sub" fill="#7a4830">Forwards write downstream</text>
+          </g>
+
+          <line x1="460" y1="274" x2="410" y2="274" stroke="#888780" stroke-width="1" marker-end="url(#arr3-gray)"/>
+
+          <g class="node-box" onclick="showTip(event,'Wrapper API','Still in the system, but now it sits at the end of the pipeline — not the beginning. It receives write commands from the Kafka consumer and sends them to NetSuite.')">
+            <rect x="290" y="248" width="118" height="52" rx="8" fill="#1f1f24" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <text x="349" y="269" text-anchor="middle" class="node-title" fill="#888780">Wrapper API</text>
+            <text x="349" y="286" text-anchor="middle" class="node-sub" fill="#555550">Adapter to NetSuite</text>
+          </g>
+
+          <line x1="290" y1="274" x2="242" y2="274" stroke="#888780" stroke-width="1" marker-end="url(#arr3-gray)"/>
+
+          <g class="node-box" onclick="showTip(event,'NetSuite API','Now just a downstream sync target. Your system no longer depends on NetSuite being available for reads or writes. If it\'s down, the Kafka broker holds events until it recovers.')">
+            <rect x="120" y="248" width="120" height="52" rx="8" fill="#1a1a1e" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <text x="180" y="269" text-anchor="middle" class="node-title" fill="#555550">NetSuite API</text>
+            <text x="180" y="286" text-anchor="middle" class="node-sub" fill="#3a3a3e">Sync target only</text>
+          </g>
+
+          <line x1="120" y1="274" x2="82" y2="274" stroke="#3a3a40" stroke-width="1" marker-end="url(#arr3)"/>
+
+          <g class="node-box" onclick="showTip(event,'NetSuite DB','No longer the source of truth. Data flows in from your system — not out to your system. The dependency has been completely reversed.')">
+            <rect x="20" y="248" width="60" height="52" rx="8" fill="#1a1a1e" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <text x="50" y="269" text-anchor="middle" style="font-size:11px" fill="#555550">NetSuite</text>
+            <text x="50" y="284" text-anchor="middle" style="font-size:11px" fill="#555550">DB</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="change-grid">
+        <div class="change-box" style="border-left-color:var(--teal)">
+          <div class="change-box-title" style="color:var(--teal)">Maxwell watches your DB</div>
+          <div class="change-box-text">Not NetSuite's DB anymore — the CDC pipeline flipped direction.</div>
+        </div>
+        <div class="change-box" style="border-left-color:var(--teal)">
+          <div class="change-box-title" style="color:var(--teal)">Full decoupling</div>
+          <div class="change-box-text">NetSuite down? Your system keeps running. Events queue until it recovers.</div>
+        </div>
+        <div class="change-box" style="border-left-color:var(--teal)">
+          <div class="change-box-title" style="color:var(--teal)">NetSuite is downstream</div>
+          <div class="change-box-text">It receives data from you now — not the other way around.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- COMPARISON TABLE -->
+    <div class="phase-section">
+      <div class="phase-section-title">All 3 phases at a glance</div>
+      <div class="phase-section-sub" style="margin-bottom:0">How each dimension changes phase by phase.</div>
+      <table class="diff-table">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Phase 1</th>
+            <th>Phase 2</th>
+            <th>Phase 3</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--muted)">Reads from</td>
+            <td style="color:var(--coral)">NetSuite (every time)</td>
+            <td style="color:var(--teal)">Your DB</td>
+            <td style="color:var(--teal)">Your DB</td>
+          </tr>
+          <tr>
+            <td style="color:var(--muted)">Writes to</td>
+            <td style="color:var(--coral)">NetSuite (direct)</td>
+            <td style="color:var(--coral)">NetSuite (direct)</td>
+            <td style="color:var(--teal)">Your DB first → Kafka → NetSuite</td>
+          </tr>
+          <tr>
+            <td style="color:var(--muted)">Maxwell watches</td>
+            <td style="color:var(--muted)">—</td>
+            <td style="color:var(--amber)">NetSuite DB</td>
+            <td style="color:var(--teal)">Your DB</td>
+          </tr>
+          <tr>
+            <td style="color:var(--muted)">NetSuite's role</td>
+            <td style="color:var(--coral)">Source of truth</td>
+            <td style="color:var(--amber)">Source of truth + sync target</td>
+            <td style="color:var(--teal)">Downstream sync target only</td>
+          </tr>
+          <tr>
+            <td style="color:var(--muted)">If NetSuite goes down</td>
+            <td style="color:var(--coral)">Your system goes down</td>
+            <td style="color:var(--amber)">Reads still work, writes fail</td>
+            <td style="color:var(--teal)">System keeps working, events queue</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function showSection(id, tab) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    tab.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleCard(card) {
+    const isOpen = card.classList.contains('open');
+    document.querySelectorAll('.concept-card').forEach(c => c.classList.remove('open'));
+    if (!isOpen) card.classList.add('open');
+  }
+
+  const tips = {
+    'wrapper': { title: 'Wrapper API', body: 'Abstracts the NetSuite API. Your code calls the Wrapper — the Wrapper calls NetSuite. Like an adapter pattern — protects the system from vendor API changes.' },
+    'netsuite-api': { title: 'NetSuite API', body: 'The vendor-managed external API. Every call costs money and adds latency. If NetSuite rate-limits or goes down, your system stalls.' },
+    'netsuite-db': { title: 'NetSuite DB', body: 'All data lives here in phase 1. No copy, no fallback. This is the single point of failure NDR removes.' }
+  };
+
+  function showTip(event, title, body) {
+    event.stopPropagation();
+    const tip = document.getElementById('tooltip');
+    document.getElementById('tip-title').textContent = title;
+    document.getElementById('tip-body').textContent = body;
+    tip.classList.add('visible');
+    const x = Math.min(event.clientX + 12, window.innerWidth - 260);
+    const y = Math.min(event.clientY + 12, window.innerHeight - 150);
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  }
+
+  document.addEventListener('click', () => {
+    document.getElementById('tooltip').classList.remove('visible');
+  });
+  document.addEventListener('scroll', () => {
+    document.getElementById('tooltip').classList.remove('visible');
+  });
+</script>
+</body>
+</html>
